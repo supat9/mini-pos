@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Management</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #0044cc;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        nav {
+            background-color: #333;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        nav a {
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            margin: 0 10px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: #575757;
+        }
+
+        /* Form Styling */
+        .form-container, .table-container {
+            width: 80%;
+            margin: 20px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container input, .form-container button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        .form-container button {
+            background-color: #0044cc;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .form-container button:hover {
+            background-color: #0033a0;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        td {
+            background-color: #fff;
+        }
+
+        td button {
+            background-color: #ff5722;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        td button:hover {
+            background-color: #e64a19;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .form-container, .table-container {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Payment Management</h1>
+    </header>
+
+    <nav>
+        <a href="addCustomers.html">Add Customers</a>
+        <a href="addProducts.html">Add Products</a>
+        <a href="addOrders.html">Add Orders</a>
+        <a href="addOrderDetails.html">Add Order Details</a>
+        <a href="addPayments.html">Add Payments</a>
+    </nav>
+
+    <div class="form-container">
+        <h3 id="form-title">Add New Payment</h3>
+        <form id="payment-form">
+            <input type="hidden" id="payment-id">
+            <label for="order_id">Order ID:</label>
+            <input type="number" id="order_id" required><br><br>
+            <label for="amount">Amount:</label>
+            <input type="number" id="amount" required><br><br>
+            <label for="payment_status">Payment Status:</label>
+            <input type="text" id="payment_status" required><br><br>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <h3>Payment List</h3>
+        <table id="payments-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Amount</th>
+                    <th>Payment Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Payment data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const apiUrl = 'http://localhost:8800/api/v1/payments'; // URL of your API
+
+        // Function to fetch and display payments
+        async function fetchPayments() {
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const tableBody = document.querySelector("#payments-table tbody");
+                    tableBody.innerHTML = ""; // Clear existing rows
+
+                    data.payments.forEach(payment => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${payment.order_id}</td>
+                            <td>${payment.amount}</td>
+                            <td>${payment.payment_status}</td>
+                            <td>
+                                <button onclick="editPayment(${payment.payment_id})">Edit</button>
+                                <button onclick="deletePayment(${payment.payment_id})">Delete</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    alert("Error fetching payments: " + data.error);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error fetching payments.");
+            }
+        }
+
+        // Handle adding or updating payment
+        document.getElementById("payment-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const id = document.getElementById("payment-id").value;
+            const order_id = document.getElementById("order_id").value;
+            const amount = document.getElementById("amount").value;
+            const payment_status = document.getElementById("payment_status").value;
+
+            const paymentData = {
+                order_id,
+                amount,
+                payment_status,
+            };
+
+            // Validate input
+            if (!order_id || !amount || !payment_status) {
+                alert("All fields are required.");
+                return;
+            }
+
+            try {
+                let response;
+                if (id) {
+                    // Update payment
+                    response = await fetch(`${apiUrl}/${id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(paymentData),
+                    });
+                } else {
+                    // Create new payment
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(paymentData),
+                    });
+                }
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert("Payment saved successfully.");
+                    // Reset form and refresh the table
+                    document.getElementById("payment-form").reset();
+                    document.getElementById("payment-id").value = '';
+                    fetchPayments();
+                } else {
+                    alert("Error saving payment: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error saving payment.");
+            }
+        });
+
+        // Fill the form for editing payment
+        async function editPayment(id) {
+            const response = await fetch(`${apiUrl}/${id}`);
+            const data = await response.json();
+
+            if (response.ok) {
+                document.getElementById("form-title").innerText = "Edit Payment";
+                document.getElementById("payment-id").value = data.payment.payment_id;
+                document.getElementById("order_id").value = data.payment.order_id;
+                document.getElementById("amount").value = data.payment.amount;
+                document.getElementById("payment_status").value = data.payment.payment_status;
+            } else {
+                alert("Error fetching payment: " + data.error);
+            }
+        }
+
+        // Handle deleting a payment
+        async function deletePayment(id) {
+            if (confirm("Are you sure you want to delete this payment?")) {
+                try {
+                    const response = await fetch(`${apiUrl}/${id}`, {
+                        method: 'DELETE',
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        alert("Payment deleted successfully.");
+                        fetchPayments();
+                    } else {
+                        alert("Error deleting payment: " + data.error);
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("Error deleting payment.");
+                }
+            }
+        }
+
+        // Initial fetch and display payments when the page loads
+        fetchPayments();
+    </script>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Detail Management</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #0044cc;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        nav {
+            background-color: #333;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        nav a {
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            margin: 0 10px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: #575757;
+        }
+
+        /* Form Container */
+        .form-container, .table-container {
+            width: 80%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .form-container input, .form-container button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        .form-container button {
+            background-color: #0044cc;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .form-container button:hover {
+            background-color: #0033a0;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        td {
+            background-color: #fff;
+        }
+
+        td button {
+            background-color: #ff5722;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        td button:hover {
+            background-color: #e64a19;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .form-container, .table-container {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Order Detail Management</h1>
+    </header>
+
+    <nav>
+        <a href="addCustomers.html">Add Customers</a>
+        <a href="addProducts.html">Add Products</a>
+        <a href="addOrders.html">Add Orders</a>
+        <a href="addOrderDetails.html">Add Order Details</a>
+        <a href="addPayments.html">Add Payments</a>
+    </nav>
+
+    <!-- Form to Add or Edit Order Detail -->
+    <div class="form-container">
+        <h3 id="form-title">Add New Order Detail</h3>
+        <form id="order-detail-form">
+            <input type="hidden" id="order-detail-id">
+            <label for="order_id">Order ID:</label>
+            <input type="number" id="order_id" required><br><br>
+            <label for="product_id">Product ID:</label>
+            <input type="number" id="product_id" required><br><br>
+            <label for="quantity">Quantity:</label>
+            <input type="number" id="quantity" required><br><br>
+            <label for="price">Price:</label>
+            <input type="number" id="price" required><br><br>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <!-- Table to Display Order Details -->
+    <div class="table-container">
+        <h3>Order Detail List</h3>
+        <table id="orderdetails-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Product ID</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Order detail data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const apiUrl = 'http://localhost:8800/api/v1/orderdetails'; // API URL
+
+        // Fetch and display all orderdetails
+        async function fetchOrderDetails() {
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const tableBody = document.querySelector("#orderdetails-table tbody");
+                    tableBody.innerHTML = ""; // Clear existing rows
+
+                    data.orderdetails.forEach(orderdetail => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${orderdetail.order_id}</td>
+                            <td>${orderdetail.product_id}</td>
+                            <td>${orderdetail.quantity}</td>
+                            <td>${orderdetail.price}</td>
+                            <td>
+                                <button onclick="editOrderDetail(${orderdetail.orderdetail_id})">Edit</button>
+                                <button onclick="deleteOrderDetail(${orderdetail.orderdetail_id})">Delete</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    alert("Error fetching order details: " + data.error);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error fetching order details.");
+            }
+        }
+
+        // Handle adding or updating order detail
+        document.getElementById("order-detail-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const id = document.getElementById("order-detail-id").value;
+            let order_id = document.getElementById("order_id").value;
+            let product_id = document.getElementById("product_id").value;
+            let quantity = document.getElementById("quantity").value;
+            let price = document.getElementById("price").value;
+
+            // Convert to correct types
+            order_id = parseInt(order_id);
+            product_id = parseInt(product_id);
+            quantity = parseInt(quantity);
+            price = parseFloat(price);  // Ensure price is a decimal/float
+
+            // Check if the required fields are valid numbers
+            if (isNaN(order_id) || isNaN(product_id) || isNaN(quantity) || isNaN(price)) {
+                alert("All fields must contain valid numbers.");
+                return;
+            }
+
+            const orderDetailData = {
+                order_id,
+                product_id,
+                quantity,
+                price,
+            };
+
+            try {
+                let response;
+                if (id) {
+                    // Update order detail
+                    response = await fetch(`${apiUrl}/${id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(orderDetailData),
+                    });
+                } else {
+                    // Create new order detail
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(orderDetailData),
+                    });
+                }
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert("Order detail saved successfully.");
+                    // Reset form and refresh the table
+                    document.getElementById("order-detail-form").reset();
+                    document.getElementById("order-detail-id").value = '';
+                    fetchOrderDetails();
+                } else {
+                    alert("Error saving order detail: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error saving order detail.");
+            }
+        });
+
+        // Fill the form for editing order detail
+        async function editOrderDetail(id) {
+            const response = await fetch(`${apiUrl}/${id}`);
+            const data = await response.json();
+
+            if (response.ok) {
+                document.getElementById("form-title").innerText = "Edit Order Detail";
+                document.getElementById("order-detail-id").value = data.orderdetail.orderdetail_id;
+                document.getElementById("order_id").value = data.orderdetail.order_id;
+                document.getElementById("product_id").value = data.orderdetail.product_id;
+                document.getElementById("quantity").value = data.orderdetail.quantity;
+                document.getElementById("price").value = data.orderdetail.price;
+            } else {
+                alert("Error fetching order detail: " + data.error);
+            }
+        }
+
+        // Handle deleting an order detail
+        async function deleteOrderDetail(id) {
+            if (confirm("Are you sure you want to delete this order detail?")) {
+                try {
+                    const response = await fetch(`${apiUrl}/${id}`, {
+                        method: 'DELETE',
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        alert("Order detail deleted successfully.");
+                        fetchOrderDetails();
+                    } else {
+                        alert("Error deleting order detail: " + data.error);
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("Error deleting order detail.");
+                }
+            }
+        }
+
+        // Initial fetch and display orderdetails when the page loads
+        fetchOrderDetails();
+    </script>
+</body>
+</html>

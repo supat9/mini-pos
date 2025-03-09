@@ -1,0 +1,42 @@
+#สร้าง DATABASE
+SHOWDATABASES;
+CREATE DATABASE databasename;
+
+#Backend
+npm init -y
+npm i nodemon
+
+วาง dependencies
+
+    "@prisma/client": "^5.11.0",
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.18.3",
+    "express-rate-limit": "^7.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "prisma": "^5.11.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0"
+
+npm install
+
+วางตรง scripts # "start": "nodemon index.js",
+
+npx prisma init
+แก้ไข schema.prisma #provider = "mysql"
+แก้ไข .env #DATABASE_URL=mysql://root:6521604325@localhost:3306/test
+npx prisma db pull
+npx prisma generate
+npx prisma migrate dev --name update_customer_schema
+สร้าง folder controllers สร้าง files customers.js
+สร้าง folder routes สร้าง file api.js
+
+#Frontend
+npm init vue@latest
+npm i
+npm run dev
+npm install --save quasar @quasar/extras
+npm install --save-dev @quasar/vite-plugin sass-embedded@^1.80.2
+https://quasar.dev/start/vite-plugin
+https://quasar.dev/layout-builder

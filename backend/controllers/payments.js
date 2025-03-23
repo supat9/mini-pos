@@ -35,9 +35,14 @@ const getPaymentById = async (req, res) => {
 };
 
 // Create new payment
+// Create new payment
 const addPayment = async (req, res) => {
-  const { order_id, amount, payment_status } = req.body;
+  let { order_id, amount, payment_status } = req.body;
   try {
+    // แปลงเป็นตัวเลขที่ Prisma ต้องการ
+    order_id = parseInt(order_id, 10);   // order_id เป็น Int
+    amount = parseFloat(amount);         // amount เป็น Float/Decimal
+
     const payment = await prisma.payments.create({
       data: {
         order_id,
@@ -51,6 +56,7 @@ const addPayment = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
 
 // Update payment status by ID
 const updatePayment = async (req, res) => {
